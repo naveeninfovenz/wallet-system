@@ -29,18 +29,36 @@ class TransactionController extends Controller
     }
 
     // Transaction Details
-    public function show($id)
-    {
-        $transaction = WalletTransaction::findOrFail($id);
+   public function show($id)
+      {
+      $transaction = WalletTransaction::where('wallet_transactions.id', $id)
+        ->join('wallets as sender_wallet', 'sender_wallet.id', '=', 'wallet_transactions.from_wallet_id')
+        ->join('users as sender', 'sender.id', '=', 'sender_wallet.user_id')
+        ->join('wallets as receiver_wallet', 'receiver_wallet.id', '=', 'wallet_transactions.to_wallet_id')
+        ->join('users as receiver', 'receiver.id', '=', 'receiver_wallet.user_id')
+        ->select(
+            'wallet_transactions.*',
+            'sender.name as sender_name',
+            'sender.email as sender_email',
+            'receiver.name as receiver_name',
+            'receiver.email as receiver_email'
+        )
+        ->firstOrFail();
+        $ledger = LedgerEntry::where('wallet_transaction_id', $id)
+            ->join('wallets', 'wallets.id', '=', 'ledger_entries.wallet_id')
+            ->join('users', 'users.id', '=', 'wallets.user_id')
+            ->select(
+                'ledger_entries.*',
+                'users.name'
+            )
+            ->get();
 
-        $ledger = LedgerEntry::where('wallet_transaction_id', $id)->get();
+    $logs = TransactionLog::where('transaction_id', $id)->get();
 
-        $logs = TransactionLog::where('transaction_id', $id)->get();
-
-        return view('wallet.show', compact(
-            'transaction',
-            'ledger',
-            'logs'
-        ));
-    }
+    return view('wallet.show', compact(
+        'transaction',
+        'ledger',
+        'logs'
+    ));
+  }
 }
