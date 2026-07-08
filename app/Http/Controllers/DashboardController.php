@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Wallet;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
 class DashboardController extends Controller
 {
     public function __construct() {
@@ -14,6 +15,7 @@ class DashboardController extends Controller
 
  public function index()
 {
+  
      $wallet = Wallet::firstOrCreate(
         ['user_id' => Auth::id()],
         [
