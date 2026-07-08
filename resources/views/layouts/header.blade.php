@@ -25,28 +25,22 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
 </head>
 <body>
     @yield('content')
-    @if(session()->has('status-error'))
-        <div class="alert alert-success">
-                <div class="full">
-                    <div class="notifications alert-success cf"><span class="message-icon success"></span>
-                        <p>{{ session()->pull('status-error') }}</p><span class="close">X</span>
-                    </div>
-                </div>
-            </div>
-            @endif
-        @if(session()->has('status-success'))
-            <div class="alert alert-success login-success">
-            <div class="full" ><div class="notifications alert-success cf"><span class="message-icon success"></span><p>  {{ session()->get('status-success') }}</p><span class="close">X</span></div></div>
-            </div>
-        @endif
-        <div class="confirmation-popup-container d-none">
-            <div class="awsm-dialog animated bounceIn">
-                <div class="awd-content">
-                    <p class="awd-message">Are you sure you want to delete this wallet?</p>
-                    <a href="/delete/wallet/" class="confirmation-btn awd-ok">Yes</a>
-                    <button class="confirmation-btn awd-cancel">No</button>
-                </div>
-            </div>
-        </div>
+   @if(session('status-error'))
+    <div class="alert alert-danger alert-dismissible fade show custom-alert" role="alert">
+        {{ session('status-error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
 
+@if(session('status-success'))
+    <div class="alert alert-success alert-dismissible fade show custom-alert" role="alert">
+        {{ session('status-success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+<script>
+    setTimeout(function () {
+    $('.custom-alert').fadeOut('slow');
+}, 3000);
+</script>
 @include('layouts.footer')
