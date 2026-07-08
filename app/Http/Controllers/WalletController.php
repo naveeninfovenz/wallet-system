@@ -21,16 +21,23 @@ class WalletController extends Controller
     public function index()
     {
         $wallet = Wallet::where('user_id', Auth::id())->first();
-
         return view('wallet.index', compact('wallet'));
     }
 
     // Transfer Page
-    public function create()
+  public function create()
     {
-        $users = User::where('id', '!=', Auth::id())->get();
-
-        return view('wallet.transfer', compact('users'));
+        $wallet = Wallet::where('user_id', Auth::id())->first();
+        $users = User::where('users.id', '!=', Auth::id())
+            ->join('wallets', 'wallets.user_id', '=', 'users.id')
+            ->select(
+                'users.id',
+                'users.name',
+                'users.email',
+                'wallets.balance'
+            )
+            ->get();
+        return view('wallet.transfer', compact('users', 'wallet'));
     }
 
     // Transfer Money
@@ -41,7 +48,6 @@ class WalletController extends Controller
             'amount' => 'required|numeric|min:1',
             'reference_no' => 'required'
         ]);
-
         return $this->walletService->transfer(
             Auth::id(),
             $request->receiver_id,

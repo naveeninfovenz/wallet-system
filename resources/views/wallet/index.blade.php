@@ -20,9 +20,9 @@
                     <tr>
                         <th>Balance</th>
                         <td> @if($wallet && $wallet->balance)
-                            $ {{ number_format($wallet->balance,2) }}
+                            ₹ {{ number_format($wallet->balance,2) }}
                             @else
-                            $0.00
+                            ₹0.00
                             @endif</td>
                     </tr>
 
