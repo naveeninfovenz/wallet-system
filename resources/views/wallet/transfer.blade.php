@@ -253,30 +253,18 @@
                                                     </span>
 
                                                 </td>
-
                                             </tr>
-
                                         </table>
-
-                                        
-
                                     </div>
-
                                 </div>
-
-                                <button
-
-                                    type="button"
-
-                                    class="btn btn-success w-100"
-                                    id="reviewTransfer"
-                                    data-bs-toggle="modal"
-                                    id="reviewTransfer"
-                                   >
-
-                                    Review & Confirm Transfer
-
+                                <div class="d-flex justify-content-end mt-4">
+                                <button type="button"
+                                        class="btn btn-success"
+                                        id="reviewTransfer"
+                                        data-bs-toggle="modal">
+                                    Review &amp; Confirm Transfer
                                 </button>
+                            </div>
 
                             </form>
 
@@ -402,7 +390,7 @@
 
                     class="btn btn-success"
 
-                    onclick="submitTransfer()">
+                    id="confirmTransfer">
 
                     Confirm Transfer
 
@@ -425,21 +413,23 @@
         let amount=parseFloat($("#amount").val());
         let balance=parseFloat($("#sender_balance").val());
         let valid=true;
-        if(receiver==""){
-            $("#receiver_error").html("Please select receiver.");
-            valid=false;
-        }
-        if(isNaN(amount)){
-            $("#amount_error").html("Amount is required.");
-            valid=false;
-        }else if(amount<=0){
-            $("#amount_error").html("Amount should be greater than zero.");
-            valid=false;
+        // if(receiver==""){
+        //     $("#receiver_error").html("Please select receiver.");
+        //     valid=false;
+        // }
+        // if(isNaN(amount)){
+        //     $("#amount_error").html("Amount is required.");
+        //     valid=false;
+        // }
+        // else if(amount<=0){
+        //     $("#amount_error").html("Amount should be greater than zero.");
+        //     valid=false;
 
-        }else if(amount>balance){
-            $("#amount_error").html("Insufficient Wallet Balance.");
-            valid=false;
-        }
+        // }
+        // else if(amount>balance){
+        //     $("#amount_error").html("Insufficient Wallet Balance.");
+        //     valid=false;
+        // }
         if(!valid){
             return false;
         }
@@ -465,7 +455,105 @@ document.addEventListener("DOMContentLoaded",function(){
 function submitTransfer(){
     document.getElementById("transferForm").submit();
 }
+$("#confirmTransfer").click(function () {
+    let receiverName = $("#receiver option:selected").text();
+    let amount = $("#amount").val();
+    let reference = $("input[name='reference_no']").val();
+    $.ajax({
+        url: "{{ url('/wallet/transfer') }}",
+        type: "POST",
+        data: {
+            _token: "{{ csrf_token() }}",
+            receiver_id: $("#receiver").val(),
+            amount: amount,
+            reference_no: reference
+        },
+        success: function (res) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Transfer Successful',
+                html: `
+                    <table class="table table-bordered text-start">
+                        <tr>
+                            <th>Receiver</th>
+                            <td>${receiverName}</td>
+                        </tr>
+                        <tr>
+                            <th>Amount</th>
+                            <td>₹ ${amount}</td>
+                        </tr>
+                        <tr>
+                            <th>Reference</th>
+                            <td>${reference}</td>
+                        </tr>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <td>${res.transaction_id}</td>
+                        </tr>
 
+                        <tr>
+                            <th>Status</th>
+                            <td><span class="badge bg-success">${res.transaction_status}</span></td>
+                        </tr>
+
+                    </table>
+                `
+
+            }).then(() => {
+
+                location.href="/wallet/history";
+
+            });
+
+        },
+
+        error:function(xhr){
+
+            let message="Transfer Failed";
+
+            if(xhr.responseJSON && xhr.responseJSON.message){
+                message=xhr.responseJSON.message;
+            }
+
+            Swal.fire({
+
+                icon:'error',
+
+                title:'Transfer Failed',
+
+                html:`
+                    <table class="table table-bordered text-start">
+
+                        <tr>
+                            <th>Receiver</th>
+                            <td>${receiverName}</td>
+                        </tr>
+
+                        <tr>
+                            <th>Amount</th>
+                            <td>₹ ${amount}</td>
+                        </tr>
+
+                        <tr>
+                            <th>Reference</th>
+                            <td>${reference}</td>
+                        </tr>
+
+                        <tr>
+                            <th>Error</th>
+                            <td>${message}</td>
+                        </tr>
+
+                    </table>
+                `
+
+            });
+
+        }
+
+    });
+
+});
 
 </script>
 
