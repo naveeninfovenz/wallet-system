@@ -8,77 +8,245 @@
 
             <div class="card-body">
 
-                <h3>Ledger Entries</h3>
+                <div class="row mb-4">
 
-                <table class="table table-bordered">
+                    <div class="col-md-4">
 
-                    <thead>
+                        <div class="card border-0 shadow-sm">
 
-                        <tr>
+                            <div class="card-body">
 
-                            <th>ID</th>
-                            <th>Wallet</th>
-                            <th>Type</th>
-                            <th>Amount</th>
-                            <th>Date</th>
+                                <small class="text-muted">
 
-                        </tr>
+                                    Current Balance
 
-                    </thead>
+                                </small>
 
-                    <tbody>
+                                <h2 class="text-primary">
 
-                        @foreach($ledger as $item)
+                                    ₹ {{ number_format($wallet->balance,2) }}
 
-                        <tr>
+                                </h2>
 
-                            <td>{{ $item->id }}</td>
+                            </div>
 
-                            <td>{{ $item->wallet_id }}</td>
+                        </div>
 
-                            <td>
+                    </div>
 
-                                @if($item->type=="credit")
+                    <div class="col-md-4">
 
-                                <span class="badge bg-success">
+                        <div class="card border-0 shadow-sm">
 
-                                    Credit
+                            <div class="card-body">
 
-                                </span>
+                                <small class="text-success">
 
-                                @else
+                                    Total Credit
 
-                                <span class="badge bg-danger">
+                                </small>
 
-                                    Debit
+                                <h2 class="text-success">
 
-                                </span>
+                                    + ₹ {{ number_format($totalCredit,2) }}
 
-                                @endif
+                                </h2>
 
-                            </td>
+                            </div>
 
-                            <td>
+                        </div>
 
-                                ₹ {{ $item->amount }}
+                    </div>
 
-                            </td>
+                    <div class="col-md-4">
 
-                            <td>
+                        <div class="card border-0 shadow-sm">
 
-                                {{ $item->created_at }}
+                            <div class="card-body">
 
-                            </td>
+                                <small class="text-danger">
 
-                        </tr>
+                                    Total Debit
 
-                        @endforeach
+                                </small>
 
-                    </tbody>
+                                <h2 class="text-danger">
 
-                </table>
+                                    - ₹ {{ number_format($totalDebit,2) }}
 
-                {{ $ledger->links() }}
+                                </h2>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+                <div class="card border-0 shadow-sm">
+
+                    <div class="card-header bg-white">
+
+                        <h5 class="mb-0">
+
+                            Ledger Entries
+
+                        </h5>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <table class="table table-hover align-middle">
+
+                            <thead class="table-light">
+
+                                <tr>
+
+                                    <th>#</th>
+
+                                    <th>Reference</th>
+
+                                    <th>Entry Type</th>
+
+                                    <th>Amount</th>
+
+                                    <th>Date</th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                @forelse($ledger as $item)
+
+                                <tr>
+
+                                    <td>
+
+                                        {{ $loop->iteration }}
+
+                                    </td>
+
+                                    <td>
+
+                                        {{ $item->reference_no }}
+
+                                    </td>
+
+                                    <td>
+
+                                        @if($item->type=="credit")
+
+                                        <span class="badge bg-success">
+
+                                            <i class="fa fa-arrow-down"></i>
+
+                                            Credit
+
+                                        </span>
+
+                                        @else
+
+                                        <span class="badge bg-danger">
+
+                                            <i class="fa fa-arrow-up"></i>
+
+                                            Debit
+
+                                        </span>
+
+                                        @endif
+
+                                    </td>
+
+                                    <td>
+
+                                        @if($item->type=="credit")
+
+                                        <span class="text-success">
+
+                                            + ₹ {{ number_format($item->amount,2) }}
+
+                                        </span>
+
+                                        @else
+
+                                        <span class="text-danger">
+
+                                            - ₹ {{ number_format($item->amount,2) }}
+
+                                        </span>
+
+                                        @endif
+
+                                    </td>
+
+                                    <td>
+
+                                        {{ date('d M Y',strtotime($item->created_at)) }}
+
+                                        <br>
+
+                                        <small class="text-muted">
+
+                                            {{ date('h:i A',strtotime($item->created_at)) }}
+
+                                        </small>
+
+                                    </td>
+
+                                </tr>
+
+                                @empty
+
+                                <tr>
+
+                                    <td colspan="5" class="text-center">
+
+                                        No Ledger Entries Found
+
+                                    </td>
+
+                                </tr>
+
+                                @endforelse
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+
+                    <div>
+
+                        Showing
+
+                        {{ $ledger->firstItem() }}
+
+                        -
+
+                        {{ $ledger->lastItem() }}
+
+                        of
+
+                        {{ $ledger->total() }}
+
+                        entries
+
+                    </div>
+
+                    <div>
+
+                        {{ $ledger->links('pagination::bootstrap-5') }}
+
+                    </div>
+
+                </div>
             </div>
         </div>
     </section>

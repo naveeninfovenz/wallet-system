@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\LedgerEntry;
 use App\Services\WalletService;
-
+use Illuminate\Support\Facades\DB;
 class WalletController extends Controller
 {
     protected $walletService;
@@ -57,17 +57,47 @@ class WalletController extends Controller
     }
 
     // Ledger
-    public function ledger()
-    {
-        $wallet = Wallet::where('user_id', Auth::id())->first();
-       if($wallet){
-        $ledger = LedgerEntry::where('wallet_id', $wallet->id)
-                    ->orderBy('id','desc')
-                    ->paginate(20);
-         }
-       else{
-        $ledger = LedgerEntry::whereRaw('1 = 0')->paginate(10);
-       }
-        return view('wallet.ledger', compact('ledger'));
-    }
+  public function ledger()
+        {
+            $wallet = Wallet::where('user_id', Auth::id())->first();
+
+            if (!$wallet) {
+                return view('wallet.ledger', [
+                    'ledger' => collect(),
+                    'wallet' => null,
+                    'totalCredit' => 0,
+                    'totalDebit' => 0
+                ]);
+            }
+
+            $totalCredit = LedgerEntry::where('wallet_id', $wallet->id)
+                ->where('type', 'credit')
+                ->sum('amount');
+
+            $totalDebit = LedgerEntry::where('wallet_id', $wallet->id)
+                ->where('type', 'debit')
+                ->sum('amount');
+
+            $ledger = DB::table('ledger_entries')
+                ->join(
+                    'wallet_transactions',
+                    'wallet_transactions.id',
+                    '=',
+                    'ledger_entries.wallet_transaction_id'
+                )
+                ->where('ledger_entries.wallet_id', $wallet->id)
+                ->select(
+                    'ledger_entries.*',
+                    'wallet_transactions.reference_no'
+                )
+                ->latest('ledger_entries.id')
+                ->paginate(10);
+
+            return view('wallet.ledger', compact(
+                'wallet',
+                'ledger',
+                'totalCredit',
+                'totalDebit'
+            ));
+        }
 }

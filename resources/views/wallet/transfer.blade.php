@@ -113,25 +113,13 @@
                                         </option>
 
                                         @foreach($users as $user)
-
                                         <option
-
                                             value="{{ $user->id }}"
-
                                             data-name="{{ $user->name }}"
-
-                                            data-email="{{ $user->email }}"
-
-                                            data-balance="{{ $user->balance }}">
-
+                                            data-email="{{ $user->email }}">
                                             {{ $user->name }}
-
-                                            (₹ {{ number_format($user->balance,2) }})
-
                                         </option>
-
                                         @endforeach
-
                                     </select>
                                    <div class="text-danger" id="receiver_error"></div>
                                 </div>
@@ -181,7 +169,7 @@
                                         name="reference_no"
 
                                         class="form-control"
-
+                                          disabled
                                         readonly
 
                                         value="{{ uniqid('REQ-') }}">
