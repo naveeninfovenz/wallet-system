@@ -13,6 +13,7 @@
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="{{asset('css/dashboard.css')}}">
+     <link rel="icon" type="image/png" href="{{ asset('images/wallet-logo.png') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{asset('js/dashboard.js')}}"></script>
