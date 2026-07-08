@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Wallet;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\User;
+use Illuminate\Support\Facades\Log;
 class DashboardController extends Controller
 {
     public function __construct() {
@@ -15,7 +15,7 @@ class DashboardController extends Controller
 
  public function index()
 {
-  
+  try{
      $wallet = Wallet::firstOrCreate(
         ['user_id' => Auth::id()],
         [
@@ -73,5 +73,13 @@ class DashboardController extends Controller
         'sentTransactions',
         'receivedTransactions'
     ));
+  }
+  catch(\Exception $e){
+        Log::info([
+            'function'=>'DashboardController@index',
+            'line'=>$e->getLine(),
+            'message'=>$e->getMessage()
+        ]);
+    }
 }
 }

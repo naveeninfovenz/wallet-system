@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 class WalletRepository{
 
     public function transfer($senderUserId, $receiverUserId, $amount, $referenceNo){
+        
          if ($senderUserId == $receiverUserId) {
             return response()->json([
                 'status' => false,

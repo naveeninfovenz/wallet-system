@@ -8,6 +8,7 @@ use App\Models\Wallet;
 use App\Models\LedgerEntry;
 use App\Services\WalletService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 class WalletController extends Controller
 {
     protected $walletService;
@@ -59,6 +60,7 @@ class WalletController extends Controller
     // Ledger
   public function ledger()
         {
+            try{
             $wallet = Wallet::where('user_id', Auth::id())->first();
 
             if (!$wallet) {
@@ -99,5 +101,13 @@ class WalletController extends Controller
                 'totalCredit',
                 'totalDebit'
             ));
+            }
+            catch(\Exception $e){
+                Log::info([
+                    'function'=>'WalletController@ledger',
+                    'line'=>$e->getLine(),
+                    'message'=>$e->getMessage()
+                ]);
+            }
         }
 }
