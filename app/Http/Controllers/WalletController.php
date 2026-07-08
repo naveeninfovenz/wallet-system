@@ -48,13 +48,12 @@ class WalletController extends Controller
             'amount' => 'required|numeric|min:1',
             'reference_no' => 'required'
         ]);
-        $response = $this->walletService->transfer(
+        return $this->walletService->transfer(
             Auth::id(),
             $request->receiver_id,
             $request->amount,
             $request->reference_no
         );
-        dd($response);
     }
 
     // Ledger
