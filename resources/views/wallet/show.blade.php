@@ -1,12 +1,4 @@
-@extends('layouts.header')
-@section('title','Wallet')
-@section('content')
-<div class="dashboard">
-    @include('layouts.sidebar')
-    <section id="expenses" class="card fade-in">
-        <div class="card">
 
-            <div class="card-body">
 
                 @extends('layouts.header')
                 @section('title','Wallet')
