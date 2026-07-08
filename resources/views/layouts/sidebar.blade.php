@@ -1,24 +1,12 @@
-<div class="list-group">
-
-    <a href="{{ url('/') }}"
-       class="list-group-item">
-
-        Dashboard
-
-    </a>
-
-    <a href="{{ url('/wallet/balance') }}"
-       class="list-group-item">
-
-        Balance
-
-    </a>
-
-    <a href="{{ url('/wallet/history') }}"
-       class="list-group-item">
-
-        History
-
-    </a>
-
-</div>
+<div class="sidebar">
+    <div class="wallet">
+    <!-- <img src="{{asset('images/wallet-logo.png')}}" alt="wallet logo"> -->
+    </div>
+            <h1>Dashboard</h1>
+            <nav>
+                <ul>
+                    <li><a href="#overview">Wallet</a></li>
+                    <li><a href="{{route('logout')}}">LogOut</a></li>
+                </ul>
+            </nav>
+        </div>
