@@ -13,7 +13,7 @@
 
     <link rel="stylesheet" href="{{asset('css/dashboard.css')}}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{asset('js/dashboard.js')}}"></script>
     <script src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.14.0/jquery.validate.js"></script>
     @if(Route::current()->getName() == "index")
