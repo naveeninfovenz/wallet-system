@@ -8,7 +8,7 @@
 
             <div class="card-body">
 
-                <h3>Transaction History</h3>
+                <h3>Ledger Entries</h3>
 
                 <table class="table table-bordered">
 
@@ -17,10 +17,10 @@
                         <tr>
 
                             <th>ID</th>
-                            <th>Reference</th>
+                            <th>Wallet</th>
+                            <th>Type</th>
                             <th>Amount</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                            <th>Date</th>
 
                         </tr>
 
@@ -28,34 +28,45 @@
 
                     <tbody>
 
-                        @foreach($transactions as $row)
+                        @foreach($ledger as $item)
 
                         <tr>
 
-                            <td>{{ $row->id }}</td>
+                            <td>{{ $item->id }}</td>
 
-                            <td>{{ $row->reference_no }}</td>
-
-                            <td>₹ {{ $row->amount }}</td>
+                            <td>{{ $item->wallet_id }}</td>
 
                             <td>
 
+                                @if($item->type=="credit")
+
                                 <span class="badge bg-success">
 
-                                    {{ $row->status }}
+                                    Credit
 
                                 </span>
+
+                                @else
+
+                                <span class="badge bg-danger">
+
+                                    Debit
+
+                                </span>
+
+                                @endif
 
                             </td>
 
                             <td>
 
-                                <a href="/wallet/history/{{ $row->id }}"
-                                    class="btn btn-primary btn-sm">
+                                ₹ {{ $item->amount }}
 
-                                    View
+                            </td>
 
-                                </a>
+                            <td>
+
+                                {{ $item->created_at }}
 
                             </td>
 
@@ -67,8 +78,7 @@
 
                 </table>
 
-                {{ $transactions->links() }}
-
+                {{ $ledger->links() }}
             </div>
         </div>
     </section>

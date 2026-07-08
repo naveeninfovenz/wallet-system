@@ -1,98 +1,67 @@
 <?php
-
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Wallet;
-use App\Models\WalletTransaction;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\LedgerEntry;
+use App\Services\WalletService;
+
 class WalletController extends Controller
 {
-    /**
-     * Dashboard
-     */
-    public function index()
+    protected $walletService;
+
+    public function __construct(WalletService $walletService)
     {
-        $users = User::orderBy('name')->get();
-    
-        $totalUsers = User::count();
-    
-        $totalWallets = Wallet::count();
-    
-        $totalTransactions = WalletTransaction::count();
-    
-        $transactions = DB::table('wallet_transactions as wt')
-            ->join('wallets as sw','wt.from_wallet_id','=','sw.id')
-            ->join('users as sender','sw.user_id','=','sender.id')
-            ->join('wallets as rw','wt.to_wallet_id','=','rw.id')
-            ->join('users as receiver','rw.user_id','=','receiver.id')
-            ->select(
-                'wt.reference_no',
-                'sender.name as sender_name',
-                'receiver.name as receiver_name',
-                'wt.amount',
-                'wt.status',
-                'wt.created_at'
-            )
-            ->latest('wt.id')
-            ->limit(10)
-            ->get();
-    
-        return view('wallet.index', compact(
-            'users',
-            'totalUsers',
-            'totalWallets',
-            'totalTransactions',
-            'transactions'
-        ));
+        $this->walletService = $walletService;
     }
 
-    /**
-     * Transfer Page
-     */
-    public function transferPage()
+    // Wallet Balance
+    public function index()
     {
-        $users = User::orderBy('name')->get();
+        $wallet = Wallet::where('user_id', Auth::id())->first();
+
+        return view('wallet.index', compact('wallet'));
+    }
+
+    // Transfer Page
+    public function create()
+    {
+        $users = User::where('id', '!=', Auth::id())->get();
 
         return view('wallet.transfer', compact('users'));
     }
 
-    /**
-     * Balance Page
-     */
-    public function balancePage()
+    // Transfer Money
+    public function store(Request $request)
     {
-        $wallets = Wallet::select('wallets.*', 'users.name')
-            ->join('users', 'users.id', '=', 'wallets.user_id')
-            ->orderBy('users.name')
-            ->get();
+        $request->validate([
+            'receiver_id' => 'required|exists:users,id',
+            'amount' => 'required|numeric|min:1',
+            'reference_no' => 'required'
+        ]);
 
-        return view('wallet.balance', compact('wallets'));
+        return $this->walletService->transfer(
+            Auth::id(),
+            $request->receiver_id,
+            $request->amount,
+            $request->reference_no
+        );
     }
 
-    /**
-     * History Page
-     */
-    public function historyPage()
+    // Ledger
+    public function ledger()
     {
-        $transactions = DB::table('wallet_transactions as wt')
-            ->join('wallets as sw', 'wt.from_wallet_id', '=', 'sw.id')
-            ->join('users as sender', 'sw.user_id', '=', 'sender.id')
-            ->join('wallets as rw', 'wt.to_wallet_id', '=', 'rw.id')
-            ->join('users as receiver', 'rw.user_id', '=', 'receiver.id')
-            ->select(
-                'wt.id',
-                'wt.reference_no',
-                'sender.name as sender_name',
-                'receiver.name as receiver_name',
-                'wt.amount',
-                'wt.status',
-                'wt.created_at'
-            )
-            ->orderByDesc('wt.id')
-            ->paginate(10);
-    
-        return view('wallet.history', compact('transactions'));
+        $wallet = Wallet::where('user_id', Auth::id())->first();
+       if($wallet){
+        $ledger = LedgerEntry::where('wallet_id', $wallet->id)
+                    ->orderBy('id','desc')
+                    ->paginate(20);
+         }
+       else{
+        $ledger = LedgerEntry::whereRaw('1 = 0')->paginate(10);
+       }
+        return view('wallet.ledger', compact('ledger'));
     }
 }

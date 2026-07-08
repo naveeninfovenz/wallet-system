@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\Wallet;
@@ -8,142 +7,101 @@ use App\Models\LedgerEntry;
 use App\Models\TransactionLog;
 use Illuminate\Support\Facades\DB;
 
-
 class WalletService
 {
-    public function transfer($request)
+    public function transfer($senderUserId, $receiverUserId, $amount, $referenceNo)
     {
+        if ($senderUserId == $receiverUserId) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Sender and Receiver cannot be same.'
+            ], 422);
+        }
+        $existingTransaction = WalletTransaction::where('reference_no', $referenceNo)->first();
+        if ($existingTransaction) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Duplicate Request',
+                'transaction_id' => $existingTransaction->id,
+                'transaction_status' => $existingTransaction->status
+            ]);
+        }
+        try {
+            DB::transaction(function () use (
+                $senderUserId,
+                $receiverUserId,
+                $amount,
+                $referenceNo,
+                &$transaction
+            ) {
+                $senderWallet = Wallet::where('user_id', $senderUserId)
+                    ->lockForUpdate()
+                    ->first();
+                $receiverWallet = Wallet::where('user_id', $receiverUserId)
+                    ->lockForUpdate()
+                    ->first();
+                if (!$senderWallet) {
+                    throw new \Exception("Sender wallet not found.");
+                }
+                if (!$receiverWallet) {
+                    throw new \Exception("Receiver wallet not found.");
+                }
+                if ($senderWallet->balance < $amount) {
+                    throw new \Exception("Insufficient Balance.");
+                }
+                // Create Transaction
+                $transaction = WalletTransaction::create([
+                    'reference_no' => $referenceNo,
+                    'from_wallet_id' => $senderWallet->id,
+                    'to_wallet_id' => $receiverWallet->id,
+                    'amount' => $amount,
+                    'status' => 'pending'
+                ]);
+                // Debit Sender
+                $senderWallet->balance -= $amount;
+                $senderWallet->version += 1;
+                $senderWallet->save();
+                // Credit Receiver
+                $receiverWallet->balance += $amount;
+                $receiverWallet->version += 1;
+                $receiverWallet->save();
+                // Debit Ledger
+                LedgerEntry::create([
+                    'wallet_transaction_id' => $transaction->id,
+                    'wallet_id' => $senderWallet->id,
+                    'type' => 'debit',
+                    'amount' => $amount
+                ]);
+                // Credit Ledger
+                LedgerEntry::create([
+                    'wallet_transaction_id' => $transaction->id,
+                    'wallet_id' => $receiverWallet->id,
+                    'type' => 'credit',
+                    'amount' => $amount
+                ]);
+                // Transaction Log
+                TransactionLog::create([
+                    'transaction_id' => $transaction->id,
+                    'old_status' => 'pending',
+                    'new_status' => 'completed'
+                ]);
+                // Update Transaction Status
+                $transaction->status = 'completed';
+                $transaction->save();
+            }, 5); // Retry 5 Times on Deadlock
+            return response()->json([
+                'status' => true,
+                'transaction_id' => $transaction?$transaction->id:"",
+                'transaction_status' => 'completed'
+            ]);
 
-        if($request->sender_id==$request->receiver_id){
+        } catch (\Exception $e) {
 
             return response()->json([
-                'status'=>false,
-                'message'=>'Sender and Receiver cannot be same.'
-            ],422);
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 500);
 
         }
-
-        // Idempotency
-        $exists=WalletTransaction::where('reference_no','=',$request->reference_no)->first();
-
-        if($exists){
-
-            return response()->json([
-                'status'=>true,
-                'message'=>'Duplicate Request',
-                'transaction'=>$exists
-            ]);
-
-        }
-
-        try{
-
-            DB::beginTransaction();
-
-            // Always lock in ascending wallet id order
-            $walletIds = [$request->sender_id, $request->receiver_id];
-            sort($walletIds);
-
-            $lockedWallets = Wallet::whereIn('user_id', $walletIds)
-                ->orderBy('user_id')
-                ->lockForUpdate()
-                ->get()
-                ->keyBy('user_id');
-
-            $sender = $lockedWallets[$request->sender_id] ?? null;
-            $receiver = $lockedWallets[$request->receiver_id] ?? null;
-
-            if(!$sender || !$receiver){
-
-                DB::rollBack();
-
-                return response()->json([
-                    'status'=>false,
-                    'message'=>'Wallet not found.'
-                ],404);
-
-            }
-
-            if($sender->balance < $request->amount){
-
-                DB::rollBack();
-
-                return response()->json([
-                    'status'=>false,
-                    'message'=>'Insufficient Balance.'
-                ],422);
-
-            }
-
-            $transaction = WalletTransaction::create([
-
-                'reference_no'=>$request->reference_no,
-                'from_wallet_id'=>$sender->id,
-                'to_wallet_id'=>$receiver->id,
-                'amount'=>$request->amount,
-                'status'=>'pending'
-
-            ]);
-
-            $sender->balance -= $request->amount;
-            $sender->version += 1;
-            $sender->save();
-
-            $receiver->balance += $request->amount;
-            $receiver->version += 1;
-            $receiver->save();
-
-            LedgerEntry::create([
-                'wallet_transaction_id'=>$transaction->id,
-                'wallet_id'=>$sender->id,
-                'type'=>'debit',
-                'amount'=>$request->amount
-            ]);
-
-            LedgerEntry::create([
-                'wallet_transaction_id'=>$transaction->id,
-                'wallet_id'=>$receiver->id,
-                'type'=>'credit',
-                'amount'=>$request->amount
-            ]);
-
-            $transaction->status='completed';
-            $transaction->save();
-
-            TransactionLog::create([
-                'transaction_id'=>$transaction->id,
-                'old_status'=>'pending',
-                'new_status'=>'completed'
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'status'=>true,
-                'transaction_id'=>$transaction->id,
-                'message'=>'Transfer Successful'
-            ]);
-
-        }catch(\Throwable $e){
-
-            DB::rollBack();
-
-            return response()->json([
-                'status'=>false,
-                'message'=>$e->getMessage()
-            ],500);
-
-        }
-
-    }
-
-    public function balance($userId)
-    {
-
-    }
-
-    public function history($userId)
-    {
-
     }
 }
